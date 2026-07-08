@@ -21,16 +21,21 @@ moderation are intentionally deferred to later phases). What's here:
 
 ## Stack
 
-Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 (SQLite via
-`@prisma/adapter-better-sqlite3` for local dev; swap the adapter for Postgres
-in production) · NextAuth v5 · Zod · MusicBrainz + Cover Art Archive APIs.
+Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 (Postgres via
+`@prisma/adapter-pg`) · NextAuth v5 · Zod · MusicBrainz + Cover Art Archive APIs.
+Deployed on Railway (Postgres plugin + web service, built from this repo).
 
 ## Getting started
 
+You'll need a Postgres database to develop against — either run one locally
+(Docker: `docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres`) or
+point `DATABASE_URL` at the same Railway Postgres instance the deployed app
+uses (fine for a solo/early-stage project).
+
 ```bash
 npm install
-cp .env.example .env   # then fill in secrets (see below)
-npx prisma migrate dev
+cp .env.example .env   # then fill in DATABASE_URL and secrets (see below)
+npm run db:deploy      # pushes the Prisma schema to your database
 npm run db:seed        # ~30 well-known albums with real MusicBrainz metadata
 npm run dev
 ```
@@ -45,7 +50,7 @@ See `.env.example` for the full list. The important ones for local dev:
 
 | Variable | Required? | Notes |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | Defaults to a local SQLite file (`file:./dev.db`) |
+| `DATABASE_URL` | yes | Postgres connection string |
 | `AUTH_SECRET` | yes | Any random string in dev; generate a real one for prod with `openssl rand -base64 32` |
 | `AUTH_URL` | yes | Base URL of the app, e.g. `http://localhost:3000` |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | no | Leave blank to disable Google sign-in; the credentials (email/password) flow works without it |
@@ -94,16 +99,15 @@ vars yet.
 
 Prisma 7 no longer allows a connection URL directly in `schema.prisma`; the
 app constructs a `PrismaClient` with an explicit driver adapter
-(`src/lib/prisma.ts`, using `@prisma/adapter-better-sqlite3`). To move to
-Postgres for production:
+(`src/lib/prisma.ts`, using `@prisma/adapter-pg` against `DATABASE_URL`).
 
-1. Change `provider = "sqlite"` to `provider = "postgresql"` in
-   `prisma/schema.prisma`.
-2. Swap the adapter in `src/lib/prisma.ts` for `@prisma/adapter-pg` (or your
-   Postgres driver adapter of choice), pointing at `DATABASE_URL`.
-3. Update `prisma.config.ts`'s `datasource.url` the same way (used by the
-   Prisma CLI for migrations).
-4. Re-run `npx prisma migrate dev`.
+There's no committed migration history yet — `npm run db:deploy` runs
+`prisma db push`, which syncs the schema straight onto whatever database
+`DATABASE_URL` points at. That's fine while the schema is still moving fast
+with no production data to protect. Once real user data exists, switch to
+`prisma migrate dev` locally to generate reviewable migration files, and run
+`prisma migrate deploy` (not `db push`) in production so schema changes are
+explicit and never silently drop a column.
 
 ## Testing the critical paths manually
 

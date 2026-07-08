@@ -1,5 +1,4 @@
 // Heartbeat — Prisma schema
-// SQLite for local dev; field types kept Postgres-compatible (no SQLite-only types used).
 
 generator client {
   provider = "prisma-client"
@@ -7,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum Role {
