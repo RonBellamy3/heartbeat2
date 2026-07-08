@@ -68,6 +68,7 @@ model User {
   email         String    @unique
   passwordHash  String?
   avatarUrl     String?
+  bannerUrl     String?
   bio           String?
   createdAt     DateTime  @default(now())
   role          Role      @default(USER)
@@ -120,17 +121,33 @@ model EmailVerificationToken {
   @@index([userId])
 }
 
-model Album {
+model Artist {
   id            String   @id @default(cuid())
   musicbrainzId String?  @unique
+  name          String
+  spotifyId     String?
+  photoUrl      String?
+  photoFetchedAt DateTime?
+  createdAt     DateTime @default(now())
+
+  concerts Concert[]
+
+  @@index([name])
+}
+
+model Album {
+  id            String    @id @default(cuid())
+  musicbrainzId String?   @unique
   title         String
   artistName    String
+  artistMbid    String?
   releaseYear   Int?
+  releaseDate   DateTime?
   coverArtUrl   String?
-  genres        String   @default("[]") // JSON-encoded string[] (SQLite has no native array type)
+  genres        String    @default("[]") // JSON-encoded string[] (SQLite has no native array type)
   createdById   String?
-  createdBy     User?    @relation("AlbumCreatedBy", fields: [createdById], references: [id])
-  createdAt     DateTime @default(now())
+  createdBy     User?     @relation("AlbumCreatedBy", fields: [createdById], references: [id])
+  createdAt     DateTime  @default(now())
 
   logs        AlbumLog[]
   listEntries ListEntry[]
@@ -139,6 +156,7 @@ model Album {
 
   @@index([title])
   @@index([artistName])
+  @@index([artistMbid])
 }
 
 model AlbumLog {
@@ -164,6 +182,9 @@ model AlbumLog {
 model Concert {
   id          String   @id @default(cuid())
   artistName  String
+  artistMbid  String?
+  artistId    String?
+  artist      Artist?  @relation(fields: [artistId], references: [id])
   venueName   String
   city        String
   eventDate   DateTime
@@ -175,6 +196,7 @@ model Concert {
   logs ConcertLog[]
 
   @@index([artistName])
+  @@index([artistId])
   @@index([venueName, city, eventDate])
 }
 

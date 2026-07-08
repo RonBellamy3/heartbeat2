@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { createLogSchema } from "@/lib/validation/album";
+import { createConcertLogSchema } from "@/lib/validation/concert";
 import { rateLimit, requestIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  const parsed = createLogSchema.safeParse(body);
+  const parsed = createConcertLogSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid input", issues: parsed.error.flatten().fieldErrors },
@@ -29,39 +29,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const album = await prisma.album.findUnique({
-    where: { id: parsed.data.albumId },
+  const concert = await prisma.concert.findUnique({
+    where: { id: parsed.data.concertId },
   });
-  if (!album) {
-    return NextResponse.json({ error: "Album not found" }, { status: 404 });
+  if (!concert) {
+    return NextResponse.json({ error: "Concert not found" }, { status: 404 });
   }
-  if (album.releaseDate && album.releaseDate > new Date()) {
+  if (concert.eventDate > new Date()) {
     return NextResponse.json(
-      { error: "This album hasn't been released yet." },
+      { error: "You can only log shows that have already happened." },
       { status: 400 }
     );
   }
 
-  const listenedOn = new Date(parsed.data.listenedOn);
-  if (Number.isNaN(listenedOn.getTime())) {
-    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
-  }
-  if (listenedOn > new Date()) {
-    return NextResponse.json(
-      { error: "Listen date can't be in the future." },
-      { status: 400 }
-    );
-  }
-
-  const log = await prisma.albumLog.create({
+  const log = await prisma.concertLog.create({
     data: {
       userId: session.user.id,
-      albumId: album.id,
+      concertId: concert.id,
       rating: parsed.data.rating ?? null,
       reviewText: parsed.data.reviewText || null,
-      listenedOn,
-      isRelisten: parsed.data.isRelisten ?? false,
-      containsSpoilers: parsed.data.containsSpoilers ?? false,
+      setlistNotes: parsed.data.setlistNotes || null,
     },
   });
 

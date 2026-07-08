@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { AlbumLogCard } from "@/components/album-log-card";
+import { ShareProfileButton } from "@/components/share-profile-button";
 
 export default async function ProfilePage({
   params,
@@ -8,6 +11,7 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
+  const session = await auth();
 
   const user = await prisma.user.findUnique({
     where: { username },
@@ -16,12 +20,15 @@ export default async function ProfilePage({
       username: true,
       displayName: true,
       avatarUrl: true,
+      bannerUrl: true,
       bio: true,
       createdAt: true,
       deletedAt: true,
     },
   });
   if (!user || user.deletedAt) notFound();
+
+  const isOwnProfile = session?.user?.id === user.id;
 
   const logs = await prisma.albumLog.findMany({
     where: { userId: user.id, deletedAt: null },
@@ -40,18 +47,38 @@ export default async function ProfilePage({
 
   return (
     <div className="mx-auto max-w-xl">
-      <div className="flex items-center gap-4 px-4 pt-6">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sunken text-lg font-semibold">
-          {user.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            user.displayName[0]?.toUpperCase()
-          )}
+      <div className="h-32 w-full bg-sunken">
+        {user.bannerUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.bannerUrl} alt="" className="h-full w-full object-cover" />
+        )}
+      </div>
+
+      <div className="flex items-end justify-between gap-4 px-4">
+        <div className="-mt-8 flex items-end gap-4">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-sunken text-lg font-semibold">
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              user.displayName[0]?.toUpperCase()
+            )}
+          </div>
+          <div className="min-w-0 pb-1">
+            <h1 className="truncate text-lg font-semibold">{user.displayName}</h1>
+            <p className="text-sm text-muted">@{user.username}</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold">{user.displayName}</h1>
-          <p className="text-sm text-muted">@{user.username}</p>
+        <div className="flex shrink-0 gap-2 pb-1">
+          {isOwnProfile && (
+            <Link
+              href="/settings"
+              className="rounded-full border border-border px-4 py-1.5 text-xs font-medium"
+            >
+              Edit profile
+            </Link>
+          )}
+          <ShareProfileButton username={user.username} displayName={user.displayName} />
         </div>
       </div>
 

@@ -25,7 +25,9 @@ export async function POST(request: Request) {
     musicbrainzId: parsed.data.musicbrainzId,
     title: parsed.data.title,
     artistName: parsed.data.artistName,
+    artistMbid: parsed.data.artistMbid ?? null,
     releaseYear: parsed.data.releaseYear ?? null,
+    releaseDate: parsed.data.releaseDate ?? null,
     coverArtUrl:
       parsed.data.coverArtUrl ??
       `https://coverartarchive.org/release-group/${parsed.data.musicbrainzId}/front-250`,

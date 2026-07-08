@@ -28,7 +28,13 @@ function ThemeToggle() {
   );
 }
 
-export function TopNav({ session }: { session: Session | null }) {
+export function TopNav({
+  session,
+  avatarUrl,
+}: {
+  session: Session | null;
+  avatarUrl: string | null;
+}) {
   const pathname = usePathname();
   const { openLogSheet } = useLogSheet();
 
@@ -71,10 +77,10 @@ export function TopNav({ session }: { session: Session | null }) {
           {session?.user ? (
             <Link href={`/u/${session.user.username}`}>
               <div className="h-8 w-8 overflow-hidden rounded-full bg-sunken">
-                {session.user.image ? (
+                {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={session.user.image}
+                    src={avatarUrl}
                     alt={session.user.name ?? "Profile"}
                     className="h-full w-full object-cover"
                   />
