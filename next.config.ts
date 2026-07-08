@@ -11,7 +11,7 @@ const csp = [
   "default-src 'self'",
   scriptSrc,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://coverartarchive.org https://*.googleusercontent.com",
+  "img-src 'self' data: blob: https://coverartarchive.org https://*.googleusercontent.com https://i.scdn.co",
   "font-src 'self' data:",
   "connect-src 'self'",
   "frame-ancestors 'none'",
