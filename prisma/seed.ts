@@ -1,5 +1,7 @@
+import "dotenv/config";
 import { prisma } from "../src/lib/prisma";
 import { coverArtUrlForReleaseGroup } from "../src/lib/musicbrainz";
+import { findSpotifyArtistPhoto } from "../src/lib/spotify";
 
 // Seeds a starter catalog of well-known albums (real MusicBrainz metadata)
 // so search/logging feels alive immediately. Deliberately does NOT create
@@ -113,6 +115,22 @@ async function fetchAlbumMeta(title: string, artist: string) {
   }
 }
 
+interface MBArtist {
+  id: string;
+  name: string;
+}
+
+async function fetchArtistMbid(name: string): Promise<string | null> {
+  try {
+    const query = `artist:"${name}"`;
+    const url = `${MB_BASE}/artist/?query=${encodeURIComponent(query)}&fmt=json&limit=1`;
+    const data = (await throttledFetchJson(url)) as { artists?: MBArtist[] } | null;
+    return data?.artists?.[0]?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   console.log(`Seeding ${SEED_ALBUMS.length} albums from MusicBrainz…`);
 
@@ -136,7 +154,34 @@ async function main() {
     console.log(`  + ${seedAlbum.title} — ${seedAlbum.artist}${meta ? "" : " (no MusicBrainz match)"}`);
   }
 
-  console.log("Done. No user accounts or logs were created — sign up to start logging for real.");
+  const artistNames = [...new Set(SEED_ALBUMS.map((a) => a.artist))];
+  console.log(`\nSeeding ${artistNames.length} artist profiles…`);
+  for (const name of artistNames) {
+    const existing = await prisma.artist.findFirst({ where: { name } });
+    if (existing?.photoUrl) continue; // already has a photo — nothing to refresh
+
+    const musicbrainzId = existing?.musicbrainzId ?? (await fetchArtistMbid(name));
+    const photo = await findSpotifyArtistPhoto(name);
+
+    await prisma.artist.upsert({
+      where: { musicbrainzId: musicbrainzId ?? "__none__" },
+      update: {
+        photoUrl: photo?.photoUrl,
+        spotifyId: photo?.spotifyId,
+        photoFetchedAt: new Date(),
+      },
+      create: {
+        name,
+        musicbrainzId,
+        photoUrl: photo?.photoUrl,
+        spotifyId: photo?.spotifyId,
+        photoFetchedAt: new Date(),
+      },
+    });
+    console.log(`  + ${name}${photo ? "" : " (no Spotify photo — check credentials)"}`);
+  }
+
+  console.log("\nDone. No user accounts or logs were created — sign up to start logging for real.");
 }
 
 main()
