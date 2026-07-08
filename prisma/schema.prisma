@@ -79,11 +79,13 @@ model User {
 
   albumLogs          AlbumLog[]
   concertLogs        ConcertLog[]
+  musicVideoLogs     MusicVideoLog[]
   comments           Comment[]
   likes              Like[]
   lists              List[]
   createdAlbums      Album[]                  @relation("AlbumCreatedBy")
   createdConcerts    Concert[]                @relation("ConcertCreatedBy")
+  createdMusicVideos MusicVideo[]             @relation("MusicVideoCreatedBy")
   followedBy         Follow[]                 @relation("Following")
   following          Follow[]                 @relation("Follower")
   notifications      Notification[]           @relation("NotificationRecipient")
@@ -130,7 +132,8 @@ model Artist {
   photoFetchedAt DateTime?
   createdAt     DateTime @default(now())
 
-  concerts Concert[]
+  concerts     Concert[]
+  musicVideos  MusicVideo[]
 
   @@index([name])
 }
@@ -218,6 +221,44 @@ model ConcertLog {
 
   @@index([userId, createdAt])
   @@index([concertId])
+}
+
+model MusicVideo {
+  id          String    @id @default(cuid())
+  title       String
+  artistName  String
+  artistMbid  String?
+  artistId    String?
+  artist      Artist?   @relation(fields: [artistId], references: [id])
+  videoUrl    String?
+  releaseDate DateTime?
+  createdById String?
+  createdBy   User?     @relation("MusicVideoCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+
+  logs MusicVideoLog[]
+
+  @@index([title])
+  @@index([artistName])
+  @@index([artistId])
+}
+
+model MusicVideoLog {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  musicVideoId String
+  musicVideo   MusicVideo @relation(fields: [musicVideoId], references: [id], onDelete: Cascade)
+  rating       Float?
+  reviewText   String?
+  watchedOn    DateTime
+  likeCount    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  @@index([userId, createdAt])
+  @@index([musicVideoId])
 }
 
 model Comment {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLogSheet } from "./context";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { StarRatingInput } from "@/components/star-rating";
+import { BetaBadge } from "@/components/beta-badge";
 import type { AlbumSearchResult } from "@/lib/musicbrainz";
 
 type ResolvedAlbum = {
@@ -260,12 +261,20 @@ export function LogSheet() {
                         setShowManualAdd(true);
                         setManualTitle(query);
                       }}
-                      className="text-xs text-accent hover:underline"
+                      className="flex items-center gap-2 text-xs text-accent hover:underline"
                     >
                       Can&apos;t find it? Add it manually
+                      <BetaBadge />
                     </button>
                   ) : (
                     <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <BetaBadge />
+                        <p className="text-xs text-muted">
+                          For albums that are out but not in our catalog yet — added details
+                          aren&apos;t verified.
+                        </p>
+                      </div>
                       <input
                         value={manualTitle}
                         onChange={(e) => setManualTitle(e.target.value)}
