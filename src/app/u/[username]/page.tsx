@@ -103,6 +103,37 @@ export default async function ProfilePage({
 
       {user.bio && <p className="px-4 pt-3 text-sm text-foreground/90">{user.bio}</p>}
 
+      {!isOwnProfile && !session?.user && (
+        <div className="mx-4 mt-4 flex flex-col items-start gap-2 rounded-lg bg-sunken px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-foreground/90">
+            Sign up to follow @{user.username} and see their reviews.
+          </p>
+          <div className="flex shrink-0 gap-2">
+            <Link
+              href={`/login?next=${encodeURIComponent(`/u/${user.username}`)}`}
+              className="rounded-full border border-border px-4 py-1.5 text-xs font-medium"
+            >
+              Sign in
+            </Link>
+            <Link
+              href={`/signup?next=${encodeURIComponent(`/u/${user.username}`)}`}
+              className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-accent-foreground"
+            >
+              Sign up
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {!isOwnProfile && session?.user && !isFollowing && (
+        <div className="mx-4 mt-4 flex items-center justify-between gap-2 rounded-lg bg-sunken px-4 py-3">
+          <p className="text-sm text-foreground/90">
+            Follow @{user.username} to see their reviews in your feed.
+          </p>
+          <FollowButton username={user.username} initialFollowing={isFollowing} />
+        </div>
+      )}
+
       <div className="flex gap-6 px-4 pt-4 text-sm">
         <div>
           <span className="font-semibold">{logs.length}</span>{" "}

@@ -1,13 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Wordmark } from "@/components/logo";
 
-export default function SignupPage() {
+function usernameFromProfilePath(path: string | null): string | null {
+  const match = path?.match(/^\/u\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+  const connectUsername = usernameFromProfilePath(next);
+
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -39,7 +48,18 @@ export default function SignupPage() {
       router.push("/login");
       return;
     }
-    router.push("/");
+
+    // Arrived here from a shared profile link — connect automatically since
+    // that's clearly why they signed up.
+    if (connectUsername) {
+      await fetch("/api/follows", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: connectUsername }),
+      }).catch(() => null);
+    }
+
+    router.push(next && next.startsWith("/") ? next : "/");
     router.refresh();
   }
 
@@ -47,7 +67,9 @@ export default function SignupPage() {
     <div className="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center px-6 py-12">
       <div className="mb-8 flex flex-col items-center gap-3">
         <Wordmark height={32} />
-        <h1 className="text-xl font-semibold">Create your account</h1>
+        <h1 className="text-xl font-semibold">
+          {connectUsername ? `Join to follow @${connectUsername}` : "Create your account"}
+        </h1>
         <p className="text-sm text-muted">For the love of music.</p>
       </div>
 
@@ -99,10 +121,21 @@ export default function SignupPage() {
 
       <p className="mt-4 text-center text-xs text-muted">
         Already have an account?{" "}
-        <Link href="/login" className="text-foreground hover:underline">
+        <Link
+          href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+          className="text-foreground hover:underline"
+        >
           Sign in
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }
