@@ -60,6 +60,17 @@ body {
   color: var(--color-accent-fg);
 }
 
+/* Wordmark swaps for theme: white glyphs on dark, dark glyphs on light. */
+.wordmark-for-light {
+  display: none;
+}
+:root[data-theme="light"] .wordmark-for-dark {
+  display: none;
+}
+:root[data-theme="light"] .wordmark-for-light {
+  display: block;
+}
+
 /* Skeleton loader shimmer */
 @keyframes shimmer {
   0% {
