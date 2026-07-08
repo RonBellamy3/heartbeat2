@@ -1,0 +1,360 @@
+// Heartbeat — Prisma schema
+// SQLite for local dev; field types kept Postgres-compatible (no SQLite-only types used).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum TargetType {
+  ALBUM_LOG
+  CONCERT_LOG
+  COMMENT
+  USER
+}
+
+enum NotificationType {
+  NEW_FOLLOWER
+  LIKE
+  COMMENT
+  REPLY
+  RELEASE_OUT
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  COPYRIGHT
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+enum ReleaseSource {
+  MUSICBRAINZ
+  SPOTIFY
+}
+
+enum ReleaseType {
+  ALBUM
+  EP
+  SINGLE
+}
+
+enum TourEventSource {
+  TICKETMASTER
+  BANDSINTOWN
+  USER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  displayName   String
+  email         String    @unique
+  passwordHash  String?
+  avatarUrl     String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  role          Role      @default(USER)
+  emailVerified DateTime?
+  isPrivate     Boolean   @default(false)
+  city          String?
+  deletedAt     DateTime?
+
+  albumLogs          AlbumLog[]
+  concertLogs        ConcertLog[]
+  comments           Comment[]
+  likes              Like[]
+  lists              List[]
+  createdAlbums      Album[]                  @relation("AlbumCreatedBy")
+  createdConcerts    Concert[]                @relation("ConcertCreatedBy")
+  followedBy         Follow[]                 @relation("Following")
+  following          Follow[]                 @relation("Follower")
+  notifications      Notification[]           @relation("NotificationRecipient")
+  actorNotifications Notification[]           @relation("NotificationActor")
+  reportsFiled       Report[]                 @relation("Reporter")
+  favorites          Favorite[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+
+  @@index([username])
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Album {
+  id            String   @id @default(cuid())
+  musicbrainzId String?  @unique
+  title         String
+  artistName    String
+  releaseYear   Int?
+  coverArtUrl   String?
+  genres        String   @default("[]") // JSON-encoded string[] (SQLite has no native array type)
+  createdById   String?
+  createdBy     User?    @relation("AlbumCreatedBy", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+
+  logs        AlbumLog[]
+  listEntries ListEntry[]
+  favorites   Favorite[]
+  releases    Release[]
+
+  @@index([title])
+  @@index([artistName])
+}
+
+model AlbumLog {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albumId          String
+  album            Album     @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  rating           Float?
+  reviewText       String?
+  listenedOn       DateTime
+  isRelisten       Boolean   @default(false)
+  containsSpoilers Boolean   @default(false)
+  likeCount        Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  @@index([userId, createdAt])
+  @@index([albumId])
+}
+
+model Concert {
+  id          String   @id @default(cuid())
+  artistName  String
+  venueName   String
+  city        String
+  eventDate   DateTime
+  tourName    String?
+  createdById String?
+  createdBy   User?    @relation("ConcertCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  logs ConcertLog[]
+
+  @@index([artistName])
+  @@index([venueName, city, eventDate])
+}
+
+model ConcertLog {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concertId         String
+  concert           Concert   @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  rating            Float?
+  reviewText        String?
+  videoUrl          String?
+  videoThumbnailUrl String?
+  setlistNotes      String?
+  likeCount         Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@index([userId, createdAt])
+  @@index([concertId])
+}
+
+model Comment {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType TargetType
+  targetId   String
+  text       String
+  createdAt  DateTime   @default(now())
+  deletedAt  DateTime?
+
+  @@index([targetType, targetId])
+}
+
+model Like {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType TargetType
+  targetId   String
+  createdAt  DateTime   @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+}
+
+model Follow {
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  approved    Boolean  @default(true)
+
+  @@id([followerId, followingId])
+  @@index([followingId])
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  user       User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  type       NotificationType
+  actorId    String?
+  actor      User?            @relation("NotificationActor", fields: [actorId], references: [id])
+  targetType TargetType?
+  targetId   String?
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Report {
+  id         String       @id @default(cuid())
+  reporterId String
+  reporter   User         @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType TargetType
+  targetId   String
+  reason     ReportReason
+  details    String?
+  status     ReportStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+
+  @@index([status])
+  @@index([targetType, targetId])
+}
+
+model Release {
+  id          String        @id @default(cuid())
+  source      ReleaseSource
+  sourceId    String
+  title       String
+  artistName  String
+  releaseDate DateTime
+  coverArtUrl String?
+  releaseType ReleaseType
+  albumId     String?
+  album       Album?        @relation(fields: [albumId], references: [id])
+  fetchedAt   DateTime      @default(now())
+
+  @@unique([source, sourceId])
+  @@index([releaseDate])
+}
+
+model TourEvent {
+  id         String          @id @default(cuid())
+  source     TourEventSource
+  sourceId   String?
+  artistName String
+  venueName  String
+  city       String
+  region     String?
+  country    String?
+  eventDate  DateTime
+  ticketUrl  String?
+  fetchedAt  DateTime        @default(now())
+
+  @@unique([source, sourceId])
+  @@index([artistName])
+  @@index([eventDate])
+}
+
+model List {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  isRanked    Boolean  @default(false)
+  isPrivate   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  entries ListEntry[]
+
+  @@index([userId])
+}
+
+model ListEntry {
+  id       String  @id @default(cuid())
+  listId   String
+  list     List    @relation(fields: [listId], references: [id], onDelete: Cascade)
+  albumId  String
+  album    Album   @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  position Int
+  note     String?
+
+  @@index([listId])
+}
+
+model Favorite {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albumId  String
+  album    Album  @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  position Int
+
+  @@unique([userId, position])
+  @@index([userId])
+}
+
+model MusicBrainzSearchCache {
+  id          String   @id @default(cuid())
+  query       String   @unique
+  resultsJson String
+  fetchedAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  detail    String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([action, createdAt])
+}

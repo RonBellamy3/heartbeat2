@@ -1,26 +1,108 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg: #0e0e12;
+  --color-bg-elevated: #17171d;
+  --color-bg-sunken: #08080a;
+  --color-fg: #f5f5f2;
+  --color-fg-muted: #98979f;
+  --color-fg-subtle: #616068;
+  --color-border: rgba(255, 255, 255, 0.09);
+  --color-accent: #ff5a5f;
+  --color-accent-fg: #1a0a0a;
+  --color-danger: #ff5a5f;
+}
+
+:root[data-theme="light"] {
+  --color-bg: #fbfaf9;
+  --color-bg-elevated: #ffffff;
+  --color-bg-sunken: #f1f0ee;
+  --color-fg: #16151a;
+  --color-fg-muted: #6b6a72;
+  --color-fg-subtle: #9c9ba3;
+  --color-border: rgba(20, 20, 25, 0.1);
+  --color-accent: #e5484d;
+  --color-accent-fg: #ffffff;
+  --color-danger: #e5484d;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--color-bg);
+  --color-elevated: var(--color-bg-elevated);
+  --color-sunken: var(--color-bg-sunken);
+  --color-foreground: var(--color-fg);
+  --color-muted: var(--color-fg-muted);
+  --color-subtle: var(--color-fg-subtle);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-fg);
+  --color-danger: var(--color-danger);
+  --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+}
+
+/* Skeleton loader shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-elevated) 25%,
+    var(--color-border) 50%,
+    var(--color-bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Pulse / heartbeat ECG loading flourish */
+@keyframes pulse-draw {
+  0% {
+    stroke-dashoffset: 300;
+  }
+  60% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -300;
+  }
+}
+
+.pulse-line {
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: pulse-draw 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .pulse-line {
+    animation: none;
+  }
 }
