@@ -12,13 +12,31 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
   );
 }
 
-export function Wordmark({ className }: { className?: string }) {
+export function Wordmark({
+  className,
+  height = 22,
+  showMark = true,
+}: {
+  className?: string;
+  height?: number;
+  showMark?: boolean;
+}) {
   return (
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
-      <LogoMark size={28} />
+      {showMark && <LogoMark size={Math.round(height * 1.3)} />}
       {/* eslint-disable @next/next/no-img-element */}
-      <img src="/wordmark.png" alt="Heartbeat" className="wordmark-for-dark h-[22px] w-auto" />
-      <img src="/wordmark-dark.png" alt="Heartbeat" className="wordmark-for-light h-[22px] w-auto" />
+      <img
+        src="/wordmark.png"
+        alt="Heartbeat"
+        className="wordmark-for-dark w-auto"
+        style={{ height }}
+      />
+      <img
+        src="/wordmark-dark.png"
+        alt="Heartbeat"
+        className="wordmark-for-light w-auto"
+        style={{ height }}
+      />
       {/* eslint-enable @next/next/no-img-element */}
     </span>
   );

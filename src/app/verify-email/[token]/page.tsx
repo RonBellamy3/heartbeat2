@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { LogoMark } from "@/components/logo";
+import { Wordmark } from "@/components/logo";
 
 export default function VerifyEmailPage({
   params,
@@ -24,14 +24,14 @@ export default function VerifyEmailPage({
 
   return (
     <div className="mx-auto flex min-h-[80vh] max-w-sm flex-col items-center justify-center px-6 py-12 text-center">
-      <LogoMark size={48} className="mb-4" />
+      <Wordmark height={32} className="mb-4" />
       {status === "pending" && <p className="text-sm text-muted">Verifying your email…</p>}
       {status === "ok" && (
         <>
           <h1 className="mb-2 text-xl font-semibold">Email verified</h1>
           <p className="mb-4 text-sm text-muted">You&apos;re all set.</p>
           <Link href="/" className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground">
-            Go to Heartbeat
+            Continue
           </Link>
         </>
       )}

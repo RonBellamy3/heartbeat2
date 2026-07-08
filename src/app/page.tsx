@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { LogoMark } from "@/components/logo";
+import { Wordmark } from "@/components/logo";
 import { AlbumLogCard } from "@/components/album-log-card";
 
 export default async function Home() {
@@ -10,8 +10,7 @@ export default async function Home() {
   if (!session?.user) {
     return (
       <div className="mx-auto flex min-h-[85vh] max-w-md flex-col items-center justify-center px-6 text-center">
-        <LogoMark size={64} className="mb-6" />
-        <h1 className="text-2xl font-semibold tracking-tight">Heartbeat</h1>
+        <Wordmark height={40} className="mb-6" />
         <p className="mt-2 text-muted">For the love of music.</p>
         <p className="mt-6 text-sm text-muted">
           Log the albums you listen to, rate them, write reviews, and see what

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogoMark } from "@/components/logo";
+import { Wordmark } from "@/components/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center px-6 py-12">
       <div className="mb-8 flex flex-col items-center gap-3">
-        <LogoMark size={48} />
+        <Wordmark height={32} />
         <h1 className="text-xl font-semibold">Welcome back</h1>
         <p className="text-sm text-muted">For the love of music.</p>
       </div>

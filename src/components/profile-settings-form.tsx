@@ -85,7 +85,7 @@ export function ProfileSettingsForm({ initialUser }: { initialUser: InitialUser 
         <input
           ref={bannerInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/*"
           onChange={handleBannerPick}
           className="hidden"
         />
@@ -108,7 +108,7 @@ export function ProfileSettingsForm({ initialUser }: { initialUser: InitialUser 
         <input
           ref={avatarInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/*"
           onChange={handleAvatarPick}
           className="hidden"
         />

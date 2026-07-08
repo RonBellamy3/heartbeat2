@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { AlbumLogCard } from "@/components/album-log-card";
 import { ShareProfileButton } from "@/components/share-profile-button";
+import { FollowButton } from "@/components/follow-button";
 
 export default async function ProfilePage({
   params,
@@ -45,6 +46,20 @@ export default async function ProfilePage({
       ? logs.reduce((sum, l) => sum + (l.rating ?? 0), 0) / ratedCount
       : null;
 
+  const [followerCount, followingCount, isFollowing] = await Promise.all([
+    prisma.follow.count({ where: { followingId: user.id } }),
+    prisma.follow.count({ where: { followerId: user.id } }),
+    session?.user && !isOwnProfile
+      ? prisma.follow
+          .findUnique({
+            where: {
+              followerId_followingId: { followerId: session.user.id, followingId: user.id },
+            },
+          })
+          .then((f) => Boolean(f))
+      : Promise.resolve(false),
+  ]);
+
   return (
     <div className="mx-auto max-w-xl">
       <div className="h-32 w-full bg-sunken">
@@ -70,13 +85,17 @@ export default async function ProfilePage({
           </div>
         </div>
         <div className="flex shrink-0 gap-2 pb-1">
-          {isOwnProfile && (
+          {isOwnProfile ? (
             <Link
               href="/settings"
               className="rounded-full border border-border px-4 py-1.5 text-xs font-medium"
             >
               Edit profile
             </Link>
+          ) : (
+            session?.user && (
+              <FollowButton username={user.username} initialFollowing={isFollowing} />
+            )
           )}
           <ShareProfileButton username={user.username} displayName={user.displayName} />
         </div>
@@ -95,6 +114,14 @@ export default async function ProfilePage({
             <span className="text-muted">avg rating</span>
           </div>
         )}
+        <div>
+          <span className="font-semibold">{followerCount}</span>{" "}
+          <span className="text-muted">followers</span>
+        </div>
+        <div>
+          <span className="font-semibold">{followingCount}</span>{" "}
+          <span className="text-muted">following</span>
+        </div>
       </div>
 
       <h2 className="px-4 pb-2 pt-6 text-sm font-semibold text-muted">Logs</h2>

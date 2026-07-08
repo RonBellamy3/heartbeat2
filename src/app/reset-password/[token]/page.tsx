@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogoMark } from "@/components/logo";
+import { Wordmark } from "@/components/logo";
 
 export default function ResetPasswordPage({
   params,
@@ -38,7 +38,7 @@ export default function ResetPasswordPage({
   return (
     <div className="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center px-6 py-12">
       <div className="mb-8 flex flex-col items-center gap-3">
-        <LogoMark size={48} />
+        <Wordmark height={32} />
         <h1 className="text-xl font-semibold">Set a new password</h1>
       </div>
 
